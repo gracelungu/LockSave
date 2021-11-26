@@ -1,0 +1,17 @@
+{
+  "name": "locksave",
+  "version": "1.0.0",
+  "description": "A saving DeFi application",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "solc": "^0.8.10"
+  }
+}
