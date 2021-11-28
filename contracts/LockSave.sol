@@ -24,19 +24,9 @@ contract LockSave {
 
     /**
      * @dev Validate received amount
-     * @param _amount Amount to save
      */
-    modifier validateAmount(uint256 _amount) {
-        require(_amount <= 0, "Amount must be greater than 0");
-        _;
-    }
-
-    /**
-     * @dev Validate withdrawal amount
-     * @param _amount Amount to withdrawn
-     */
-    modifier validateWithdrawAmount(uint256 _amount) {
-        require(_amount <= 0, "Amount must be greater than 0");
+    modifier validateAmount() {
+        require(msg.value > 0, "Amount must be greater than 0");
         _;
     }
 
@@ -46,53 +36,10 @@ contract LockSave {
      */
     modifier validateWithdrawTimestamp(uint256 _withdrawTimestamp) {
         require(
-            _withdrawTimestamp <= block.timestamp,
+            _withdrawTimestamp >= block.timestamp,
             "The saving period has not elapsed"
         );
         _;
-    }
-
-    /**
-     * @dev Create new user saving
-     * @param _owner Owner of the saving
-     * @param _amount Amount to save
-     * @param _withdrawTimestamp Timestamp of the withdrawal
-     */
-    function _createSaving(
-        address _owner,
-        uint256 _amount,
-        uint256 _withdrawTimestamp
-    ) private validateAmount(_amount) {
-        // The user should not exist
-        assert(Users[_owner].length == 0);
-
-        // Add the new user saving
-        Users[_owner][0] = Saving(
-            _owner,
-            _amount,
-            block.timestamp,
-            _withdrawTimestamp
-        );
-    }
-
-    /**
-     * @dev Add new saving to existing user
-     * @param _owner Owner of the saving
-     * @param _amount Amount to save
-     * @param _withdrawTimestamp Timestamp of the withdrawal
-     */
-    function _addSaving(
-        address _owner,
-        uint256 _amount,
-        uint256 _withdrawTimestamp
-    ) private validateAmount(_amount) {
-        // The user should exist
-        assert(Users[_owner].length != 0);
-
-        // Add the new saving to the already existing user
-        Users[_owner].push(
-            Saving(_owner, _amount, block.timestamp, _withdrawTimestamp)
-        );
     }
 
     /**
@@ -102,19 +49,15 @@ contract LockSave {
     function receiveSavings(uint256 _withdrawTimestamp)
         public
         payable
-        validateAmount(msg.value)
+        validateAmount()
     {
         address owner = msg.sender;
         uint256 amount = msg.value;
 
-        // Check if the user already exists
-        if (Users[owner].length == 0) {
-            // Create new user saving
-            _createSaving(owner, amount, _withdrawTimestamp);
-        } else {
-            // Add new saving to existing user
-            _addSaving(owner, amount, _withdrawTimestamp);
-        }
+        Saving memory saving = Saving(owner, amount, block.timestamp, _withdrawTimestamp);
+
+        // Add the new saving
+        Users[owner].push(saving);
     }
 
     /**
@@ -124,6 +67,7 @@ contract LockSave {
     function getUserTotalSavingAmount(address _owner)
         public
         view
+        checkSenderExists()
         returns (uint256)
     {
         uint256 total = 0;
@@ -138,9 +82,9 @@ contract LockSave {
 
     /**
      * @dev Get the withdrwal timestamp of the saving
-     * @param _savingTimestamp Timestamp of the saving
+     * @param _withdrwalTimestamp Timestamp of the saving
      */
-    function getWithdrwalTimestamp(uint256 _savingTimestamp)
+    function getWithdrwalTimestamp(uint256 _withdrwalTimestamp)
         public
         view
         checkSenderExists
@@ -150,8 +94,8 @@ contract LockSave {
 
         for (uint256 i = 0; i < Users[owner].length; i++) {
             Saving memory _saving = Users[owner][i];
-            if (_saving.timestamp == _savingTimestamp) {
-                return _saving.withdrawTimestamp;
+            if (_saving.withdrawTimestamp == _withdrwalTimestamp) {
+                return _saving.timestamp;
             }
         }
 
@@ -160,9 +104,9 @@ contract LockSave {
 
     /**
      * @dev Get the amount of a saving
-     * @param _savingTimestamp Timestamp of the saving
+     * @param _withdrawTimestamp Timestamp of the saving
      */
-    function getSavingAmountByTimestamp(uint256 _savingTimestamp)
+    function getSavingAmountByTimestamp(uint256 _withdrawTimestamp)
         public
         view
         checkSenderExists
@@ -172,7 +116,7 @@ contract LockSave {
 
         for (uint256 i = 0; i < Users[owner].length; i++) {
             Saving memory _saving = Users[owner][i];
-            if (_saving.timestamp == _savingTimestamp) {
+            if (_saving.withdrawTimestamp == _withdrawTimestamp) {
                 return _saving.amount;
             }
         }
