@@ -6,10 +6,41 @@ contract('LockSave', () => {
         lockSave = await LockSave.new();
     });
 
-    it('should create a saving', async ()=>{
-        await lockSave.receiveSavings(1234567);
-        const totalSavings =  await lockSave.getUserTotalSavingAmount('0x123456');
-        console.log(totalSavings);
-        assert(totalSavings.toNumber() === 1234567);
+    it('should create a single saving', async ()=>{
+        const withdrawalTimestamp = 123456789;
+        const amount = 1000;
+
+        await lockSave.receiveSavings(withdrawalTimestamp, {value: amount});
+
+        const totalSavings =  await lockSave.getUserTotalSavingAmount();
+        assert(totalSavings == amount);
+    });
+
+    it('should create multiple savings', async ()=>{
+        const withdrawalTimestamp = 123456789;
+        const amounts = [1000, 2000];
+
+        await Promise.all(amounts.map(async (amount) => {
+            await lockSave.receiveSavings(withdrawalTimestamp, {value: amount});
+        }));
+
+        const totalSavings =  await lockSave.getUserTotalSavingAmount();
+        assert(totalSavings.toNumber() === amounts.reduce((a, b) => a + b, 0));
+    });
+
+    it('should withdraw a saving', async () => {
+        let totalSavings;
+        const amount = 1000;
+        const withdrawalTimestamp = new Date().getTime() - 1;
+
+        await lockSave.receiveSavings(withdrawalTimestamp, {value: amount});
+        const savingTimestamp = await lockSave.getSavingTimestamp(withdrawalTimestamp);
+        
+        totalSavings = await lockSave.getUserTotalSavingAmount();
+        assert(totalSavings == amount);
+
+        await lockSave.withdrawSavings(savingTimestamp);
+        totalSavings =  await lockSave.getUserTotalSavingAmount();
+        assert(totalSavings == 0);
     });
 });

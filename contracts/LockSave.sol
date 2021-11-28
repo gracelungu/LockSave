@@ -67,19 +67,19 @@ contract LockSave {
 
     /**
      * @dev Get the total amount of savings
-     * @return Total amount of savings
      */
-    function getUserTotalSavingAmount(address _owner)
+    function getUserTotalSavingAmount()
         public
         view
         checkSenderExists
         returns (uint256)
     {
         uint256 total = 0;
+        address owner = msg.sender;
 
         // Get the user savings
-        for (uint256 i = 0; i < Users[_owner].length; i++) {
-            total += Users[_owner][i].amount;
+        for (uint256 i = 0; i < Users[owner].length; i++) {
+            total += Users[owner][i].amount;
         }
 
         return total;

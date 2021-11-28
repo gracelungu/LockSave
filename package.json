@@ -13,5 +13,8 @@
   "license": "ISC",
   "dependencies": {
     "solc": "^0.8.10"
+  },
+  "devDependencies": {
+    "chai": "^4.3.4"
   }
 }
