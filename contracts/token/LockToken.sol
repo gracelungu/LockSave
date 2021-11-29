@@ -8,7 +8,7 @@ contract LockToken is ERC20 {
     address private owner;
 
     constructor() ERC20("Lock", "LOCK") {
-        _mint(msg.sender, 1000000 * 10 ** 18);
+        _mint(msg.sender, 1000000000 * 10 ** 18);
         owner = msg.sender;
     }
 
