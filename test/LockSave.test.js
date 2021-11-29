@@ -43,4 +43,18 @@ contract('LockSave', () => {
         totalSavings =  await lockSave.getUserTotalSavingAmount();
         assert(totalSavings == 0);
     });
+
+    it('should withdraws a saving before withdrawal time', async () => {
+        let totalSavings;
+        const amount = 1000;
+        const withdrawalTimestamp = new Date().getTime() - 1;
+
+        await lockSave.receiveSavings(withdrawalTimestamp, {value: amount});
+        const savingTimestamp = await lockSave.getSavingTimestamp(withdrawalTimestamp);
+        
+        totalSavings = await lockSave.getUserTotalSavingAmount();
+        assert(totalSavings == amount);
+
+        await lockSave.earlySavingsWithdrawal(savingTimestamp);
+    });
 });

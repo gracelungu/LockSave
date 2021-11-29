@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-import './common/Modifiers.sol';
+import "./common/Modifiers.sol";
+import "./token/LockToken.sol";
+
 pragma solidity ^0.8.1;
 
-contract LockSave is Modifiers {
+contract LockSave is Modifiers, LockToken {
     struct Saving {
         address owner;
         uint256 amount;
@@ -44,6 +46,9 @@ contract LockSave is Modifiers {
 
         // Add the new saving
         Users[owner].push(saving);
+
+        // Reward the sender with an equivalent amount of Lock tokens
+        mint(owner, amount);
     }
 
     /**
@@ -143,7 +148,31 @@ contract LockSave is Modifiers {
     {
         address payable owner = payable(msg.sender);
         uint256 amount = getSavingAmountByTimestamp(_savingTimestamp);
+
         bool sent = owner.send(amount);
+
+        uint256 savingIndex = getSavingIndexByTimestamp(_savingTimestamp);
+        delete Users[owner][savingIndex];
+        require(sent, "Failed to withdraw");
+    }
+
+    /**
+     * @dev Withdraw savings before withdrwal timestamp
+     * @param _savingTimestamp Timestamp of the saving
+     */
+    function earlySavingsWithdrawal(uint256 _savingTimestamp)
+        public
+        checkSenderExists
+    {
+        address payable owner = payable(msg.sender);
+        uint256 amount = getSavingAmountByTimestamp(_savingTimestamp);
+
+        // Deduct 1% of the amount for an early withdrawal
+        uint256 amountToDeduct = amount / 100;
+        uint256 amountToSend = amount - amountToDeduct;
+
+        bool sent = owner.send(amountToSend);
+
         uint256 savingIndex = getSavingIndexByTimestamp(_savingTimestamp);
         delete Users[owner][savingIndex];
         require(sent, "Failed to withdraw");
