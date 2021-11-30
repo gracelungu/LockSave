@@ -25,7 +25,7 @@ contract LockToken is ERC20 {
         _burn(msg.sender, _amount);
     }
 
-    function crowdSales(address _to, uint256 _amount) public payable onlyOwner {
-        _mint(_to, _amount);
+    function crowdSales(uint256 _amount) public payable onlyOwner {
+        _transfer(admin, msg.sender, _amount);
     }
 }

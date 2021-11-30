@@ -15,7 +15,7 @@ contract LockSave is Modifiers, LockToken {
 
     mapping(address => Saving[]) Users;
 
-    uint256 totalLockTokenRewards = 2000000 * 10**18;
+    uint256 totalLockTokenRewards = 200000 * 10**18;
 
     /**
      *@dev Gets the total rewards left to be distributed
@@ -55,12 +55,6 @@ contract LockSave is Modifiers, LockToken {
 
         // Add the new saving
         Users[owner].push(saving);
-
-        // Reward the sender with an equivalent amount of Lock tokens
-        if (totalLockTokenRewards > 0) {
-            mint(owner, amount);
-            totalLockTokenRewards -= amount;
-        }
     }
 
     /**
