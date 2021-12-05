@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 
 import "./common/Modifiers.sol";
-import "./token/LockToken.sol";
 
 pragma solidity ^0.8.1;
 
-contract LockSave is Modifiers, LockToken {
+contract LockSave is Modifiers {
     struct Saving {
         address owner;
         uint256 amount;
@@ -60,14 +59,14 @@ contract LockSave is Modifiers, LockToken {
     /**
      * @dev Get the total amount of savings
      */
-    function getUserTotalSavingAmount()
+    function getUserTotalSavingAmount(address _user)
         public
         view
         checkSenderExists
         returns (uint256)
     {
         uint256 total = 0;
-        address owner = msg.sender;
+        address owner = _user;
 
         // Get the user savings
         for (uint256 i = 0; i < Users[owner].length; i++) {
@@ -78,7 +77,20 @@ contract LockSave is Modifiers, LockToken {
     }
 
     /**
-     * @dev Get the withdrawal timestamp of the saving
+     * @dev Get the user savings list
+     */
+    function getUserSavings(address _user)
+        public
+        view
+        checkSenderExists
+        returns (Saving[] memory)
+    {
+        address owner = _user;
+        return Users[owner];
+    }
+
+    /**
+     * @dev Get the saving timestamp of the saving
      * @param _withdrawalTimestamp Timestamp of the saving
      */
     function getSavingTimestamp(uint256 _withdrawalTimestamp)
@@ -93,6 +105,28 @@ contract LockSave is Modifiers, LockToken {
             Saving memory _saving = Users[owner][i];
             if (_saving.withdrawTimestamp == _withdrawalTimestamp) {
                 return _saving.timestamp;
+            }
+        }
+
+        revert("Saving not found");
+    }
+
+    /**
+     * @dev Get the withdrawal timestamp of the saving
+     * @param _savingTimestamp Timestamp of the saving
+     */
+    function getWithdrawalTimestamp(uint256 _savingTimestamp)
+        public
+        view
+        checkSenderExists
+        returns (uint256)
+    {
+        address owner = msg.sender;
+
+        for (uint256 i = 0; i < Users[owner].length; i++) {
+            Saving memory _saving = Users[owner][i];
+            if (_saving.timestamp == _savingTimestamp) {
+                return _saving.withdrawTimestamp;
             }
         }
 
@@ -150,8 +184,16 @@ contract LockSave is Modifiers, LockToken {
     function withdrawSavings(uint256 _savingTimestamp)
         public
         checkSenderExists
-        validateWithdrawTimestamp(_savingTimestamp)
     {
+        uint256 _withdrawTimestamp = getWithdrawalTimestamp(_savingTimestamp);
+        if (block.timestamp >= _withdrawTimestamp) {
+            withdrawOnTime(_savingTimestamp);
+        } else {
+            earlySavingsWithdrawal(_savingTimestamp);
+        }
+    }
+
+    function withdrawOnTime(uint256 _savingTimestamp) public checkSenderExists {
         address payable owner = payable(msg.sender);
         uint256 amount = getSavingAmountByTimestamp(_savingTimestamp);
 

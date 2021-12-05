@@ -2,8 +2,12 @@ const LockSave = artifacts.require("LockSave.sol");
 
 contract('LockSave', () => {
     let lockSave;
+    let wallet;
     beforeEach(async () => {
         lockSave = await LockSave.new();
+        web3.eth.getAccounts().then(accounts => {
+            wallet = accounts[0];
+        });
     });
 
     it('should create a single saving', async ()=>{
@@ -12,7 +16,7 @@ contract('LockSave', () => {
 
         await lockSave.receiveSavings(withdrawalTimestamp, {value: amount});
 
-        const totalSavings =  await lockSave.getUserTotalSavingAmount();
+        const totalSavings =  await lockSave.getUserTotalSavingAmount(wallet);
         assert(totalSavings == amount);
     });
 
@@ -24,7 +28,7 @@ contract('LockSave', () => {
             await lockSave.receiveSavings(withdrawalTimestamp, {value: amount});
         }));
 
-        const totalSavings =  await lockSave.getUserTotalSavingAmount();
+        const totalSavings =  await lockSave.getUserTotalSavingAmount(wallet);
         assert(totalSavings.toNumber() === amounts.reduce((a, b) => a + b, 0));
     });
 
@@ -36,11 +40,11 @@ contract('LockSave', () => {
         await lockSave.receiveSavings(withdrawalTimestamp, {value: amount});
         const savingTimestamp = await lockSave.getSavingTimestamp(withdrawalTimestamp);
         
-        totalSavings = await lockSave.getUserTotalSavingAmount();
+        totalSavings = await lockSave.getUserTotalSavingAmount(wallet);
         assert(totalSavings == amount);
 
         await lockSave.withdrawSavings(savingTimestamp);
-        totalSavings =  await lockSave.getUserTotalSavingAmount();
+        totalSavings =  await lockSave.getUserTotalSavingAmount(wallet);
         assert(totalSavings == 0);
     });
 
@@ -52,7 +56,7 @@ contract('LockSave', () => {
         await lockSave.receiveSavings(withdrawalTimestamp, {value: amount});
         const savingTimestamp = await lockSave.getSavingTimestamp(withdrawalTimestamp);
         
-        totalSavings = await lockSave.getUserTotalSavingAmount();
+        totalSavings = await lockSave.getUserTotalSavingAmount(wallet);
         assert(totalSavings == amount);
 
         await lockSave.earlySavingsWithdrawal(savingTimestamp);
